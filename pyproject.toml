@@ -107,6 +107,14 @@ action.call = "need_checks.action:__main__"
 readme.help = "Update the README.md"
 readme.call = "scripts.readme:__main__"
 
+update-stack.help = "Update all dependencies (keep consistency, accept pdm update parameters)"
+update-stack.composite = [
+    "pre-commit autoupdate",
+    "{pdm} update {args}",
+    "{pdm} format",
+]
+
+
 
 [tool.pdm.dockerize]
 include = ["action"]
@@ -115,7 +123,6 @@ include = ["action"]
 [tool.commitizen]
 name = "emotional"
 github = "noirbizarre/need-checks"
-tag_format = "v$version"
 order_by_scope = true
 version_provider = "scm"
 major_version_zero = true  # Remove this line for the first 1.x release

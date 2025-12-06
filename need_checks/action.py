@@ -73,22 +73,13 @@ def select_checks(
     include: str | list[str] | None = None,
     exclude: str | list[str] | None = None,
 ) -> list[CheckRun]:
-    checks = (
-        cast(
-            CheckRunList,
-            github.checks.list_for_ref(
-                owner=ctx.inputs.target_owner, repo=ctx.inputs.target_repo, ref=gitref["ref"]
-            ),
-        ).get("check_runs")
-        or []
-    )
-    filtered = (check for check in checks if check["name"] != current_job["name"])
+    params = {"owner": ctx.inputs.target_owner, "repo": ctx.inputs.target_repo}
     if check_suite:
-        filtered = (
-            check
-            for check in filtered
-            if (check.get("check_suite") or {}).get("id") == check_suite  # type: ignore[call-overload]
-        )  # type: ignore[call-overload]
+        result = github.checks.list_for_suite(**params, check_suite_id=check_suite)
+    else:
+        result = github.checks.list_for_ref(**params, ref=gitref["ref"])
+    checks = cast(CheckRunList, result).get("check_runs") or []
+    filtered = (check for check in checks if check["name"] != current_job["name"])
     return list(filtered)
 
 
@@ -125,8 +116,15 @@ def run(ctx: Context):
             workflow_id=ctx.inputs.workflow,
             head_sha=ref["object"]["sha"],
         )
-        last_run = cast(WorkflowRun, runs.workflow_runs[-1])
-        check_suite = last_run["check_suite_id"]
+        if not runs.workflow_runs:
+            raise errors.RequirementsNotMet("The workflow was not run on the commit")
+        sorted_runs = sorted(
+            cast(list[WorkflowRun], runs.workflow_runs),
+            key=lambda r: (r["run_number"], r.get("run_attempt", 0)),
+            reverse=True,
+        )
+        last_run = next(iter(sorted_runs))
+        check_suite = last_run.get("check_suite_id")
 
     waited_for = 0
     while True:

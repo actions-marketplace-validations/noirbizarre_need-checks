@@ -6,14 +6,15 @@ on:
     branches:
       - main
     tags:
-      - v*
+      # Runs only on x.y.z form, x and x.y being aliases
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   tests:
     name: 🧪 Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up PDM
         uses: pdm-project/setup-pdm@v4
         with:
@@ -26,7 +27,7 @@ jobs:
         run: pdm run cover -v --force-sugar --color=yes
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -38,7 +39,7 @@ jobs:
       packages: write
     steps:
       - name: Clone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -67,7 +68,7 @@ jobs:
           password: ${{ github.token }}
 
       - name: Push docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         id: docker
         with:
           build-args: |
