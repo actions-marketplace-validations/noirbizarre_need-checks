@@ -68,7 +68,7 @@ jobs:
           password: ${{ github.token }}
 
       - name: Push docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         id: docker
         with:
           build-args: |
